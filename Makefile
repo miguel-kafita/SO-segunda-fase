@@ -1,40 +1,42 @@
-PROGRAMS = server 
+LIBRARIES = libsthread.a libsthread_start.a
 
-INCLUDES = -I . -I ../include
-COMPILE = $(CC) $(DEFS) $(INCLUDES) $(CFLAGS)
+ OBJECTS = sthread.o sthread_pthread.o \
+	sthread_ctx.o sthread_util.o sthread_time_slice.o \
+	sthread_switch.o sthread_end.o queue.o \
+	sthread_user.o
+
+
+start_OBJECTS = sthread_start.o
+
+DEFAULT_INCLUDES = -I. -I. -I../include
+CCASCOMPILE = $(CCAS) $(CCASFLAGS)
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CFLAGS)
+AR = ar
 CC = gcc
-CFLAGS = -g -O0 -Wall -m32 -std=c99
-DEFS = -DHAVE_CONFIG_H -DSIMULATE_IO_DELAY 
-LIBSTHREAD = ../sthread_lib/libsthread.a 
-LIBSOCKS =  -lpthread
-OBJECTS = server.o snfs.o fs.o block.o io_delay.o
+CCAS = gcc
+CCASFLAGS = -g -O0 -Wall -m32 -I ../include -D__ASM__
+CFLAGS = -g -O0 -Wall -m32
+ARFLAGS = cru
+DEFS = -DHAVE_CONFIG_H -DUSE_PTHREADS
+RANLIB = ranlib
+INCLUDES = -I ../include
 
+all: $(LIBRARIES)
 
-all: libs $(PROGRAMS)
+libsthread.a: $(OBJECTS) 
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
+libsthread_start.a: $(start_OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
 
-.SUFFIXES: .c .o
-
-server: $(OBJECTS)
-	$(CC) $(CFLAGS) ../sthread_lib/sthread_start.o -o server $(OBJECTS) $(LIBSTHREAD) $(LIBSOCKS)
-
-libs:
-	$(MAKE) libsthread.a -C ../sthread_lib
+.S.o:
+	$(CCASCOMPILE) -c $<
 
 .c.o:
 	$(COMPILE) -c -o $@ $<
 
-
-clean: clean-PROGRAMS
+clean: 
 	rm -f *.o
+	rm -f *.a
 
-clean-PROGRAMS:
-	@list='$(PROGRAMS)'; for p in $$list; do \
-	  f=`echo $$p|sed 's/$$//'`; \
-	  echo " rm -f $$p $$f"; \
-	  rm -f $$p $$f ; \
-	done
-
-
-# Tell versions [3.59,3.63) of GNU make to not export all variables.
-# Otherwise a system limit (for SysV at least) may be exceeded.
-.NOEXPORT:
