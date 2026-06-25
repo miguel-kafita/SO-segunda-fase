@@ -1,36 +1,33 @@
+LIBRARIES = libsnfs.a
 
-SUBDIRS = sthread_lib snfs_server snfs_lib 
+OBJECTS = snfs_api.o myfs.o queue.o
 
-#
-# Dados sobre o grupo
-# GRUPO = indicar o numero do grupo
-# ALUNO1/ALUNO2/ALUNO3 = indicar os nomes dos estudantes (primeiro.último)
-#
-GRUPO=
-ALUNO1= Miguel Kafita
-ALUNO2= Daniel Luhembe
-ALUNO3= Leonel Paulo
+DEFAULT_INCLUDES = -I. -I. -I../include
+CCASCOMPILE = $(CCAS) $(CCASFLAGS)
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CFLAGS)
+AR = ar
+CC = gcc
+CCAS = gcc
+CCASFLAGS = -g -O0 -Wall -m32 -I ../include
+CFLAGS = -g -O0 -Wall -m32 -std=c99
+ARFLAGS = cru
+# DEFS = -DHAVE_CONFIG_H
+RANLIB = ranlib
+INCLUDES = -I ../include
 
+all: $(LIBRARIES)
 
-all: build
+libsnfs.a: $(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
+	$(RANLIB) $@
 
-build:
-	@list='$(SUBDIRS)'; for p in $$list; do \
-	  echo "Building $$p"; \
-	  $(MAKE) -C $$p; \
-	done
+.S.o:
+	$(CCASCOMPILE) -c $<
 
-clean:
-	@list='$(SUBDIRS)'; for p in $$list; do \
-	  echo "Cleaning $$p"; \
-	  $(MAKE) clean -C $$p; \
-	done
+.c.o:
+	$(COMPILE) -c -o $@ $<
 
-package: clean zip
+clean: 
+	rm -f *.o
+	rm -f *.a
 
-zip:
-ifndef GRUPO
-	@echo "ERROR: Must setup macro 'GRUPO' correcly."
-else
-	tar -czf project-$(GRUPO)-$(ALUNO1)-$(ALUNO2)-$(ALUNO3).tgz * 
-endif
