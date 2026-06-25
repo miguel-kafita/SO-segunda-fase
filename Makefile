@@ -1,36 +1,40 @@
+PROGRAMS = server 
 
-SUBDIRS = sthread_lib snfs_server snfs_lib 
-
-#
-# Dados sobre o grupo
-# GRUPO = indicar o numero do grupo
-# ALUNO1/ALUNO2/ALUNO3 = indicar os nomes dos estudantes (primeiro.último)
-#
-GRUPO=
-ALUNO1= Miguel Kafita
-ALUNO2= Daniel Luhembe
-ALUNO3= Leonel Paulo
+INCLUDES = -I . -I ../include
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(CFLAGS)
+CC = gcc
+CFLAGS = -g -O0 -Wall -m32 -std=c99
+DEFS = -DHAVE_CONFIG_H -DSIMULATE_IO_DELAY 
+LIBSTHREAD = ../sthread_lib/libsthread.a 
+LIBSOCKS =  -lpthread
+OBJECTS = server.o snfs.o fs.o block.o io_delay.o
 
 
-all: build
+all: libs $(PROGRAMS)
 
-build:
-	@list='$(SUBDIRS)'; for p in $$list; do \
-	  echo "Building $$p"; \
-	  $(MAKE) -C $$p; \
+.SUFFIXES: .c .o
+
+server: $(OBJECTS)
+	$(CC) $(CFLAGS) ../sthread_lib/sthread_start.o -o server $(OBJECTS) $(LIBSTHREAD) $(LIBSOCKS)
+
+libs:
+	$(MAKE) libsthread.a -C ../sthread_lib
+
+.c.o:
+	$(COMPILE) -c -o $@ $<
+
+
+clean: clean-PROGRAMS
+	rm -f *.o
+
+clean-PROGRAMS:
+	@list='$(PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
 	done
 
-clean:
-	@list='$(SUBDIRS)'; for p in $$list; do \
-	  echo "Cleaning $$p"; \
-	  $(MAKE) clean -C $$p; \
-	done
 
-package: clean zip
-
-zip:
-ifndef GRUPO
-	@echo "ERROR: Must setup macro 'GRUPO' correcly."
-else
-	tar -czf project-$(GRUPO)-$(ALUNO1)-$(ALUNO2)-$(ALUNO3).tgz * 
-endif
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:
